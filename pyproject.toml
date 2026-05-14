@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "football-ai"
+version = "0.1.0"
+description = "Clean modular football video analysis system based on Roboflow Sports"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+dependencies = [
+    "numpy",
+    "opencv-python",
+    "ultralytics>=8.0.0",
+    "supervision>=0.21.0",
+    "tqdm",
+    "pyyaml",
+    "gdown",
+    "pytest",
+]
+
+[project.scripts]
+football-ai = "football_ai.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["football_ai*"]

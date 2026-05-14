@@ -1,0 +1,53 @@
+# Core Project Layout Exclusions
+third_party/
+data/raw/*
+data/processed/*
+data/outputs/*
+data/models/*
+
+# Keep Placeholder Marks
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/outputs/.gitkeep
+!data/models/.gitkeep
+
+# Video Extensions & Binary Large Media Assets
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+
+# Model Weights (PyTorch, ONNX, Engine formats)
+*.pt
+*.pth
+*.onnx
+*.engine
+
+# Python Compilation & Memory Footprints
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environments & Local Configurations
+.venv/
+venv/
+env/
+ENV/
+.env
+
+# Local Logging Output
+*.log
+
+# Testing & Build Caches
+.pytest_cache/
+.mypy_cache/
+build/
+dist/
+*.egg-info/
+
+# IDE Specific Controls
+.vscode/
+.idea/

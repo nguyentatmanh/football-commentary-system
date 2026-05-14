@@ -1,0 +1,56 @@
+# Football AI Configuration
+
+# Global execution
+device: "cpu" # "cuda", "cpu", or "mps"
+
+# Paths
+video:
+  input_path: "data/raw/sample.mp4"
+  output_dir: "data/outputs/demo"
+
+# Model parameters
+detection:
+  player_model_path: "data/models/football-player-detection.pt"
+  pitch_model_path: "data/models/football-pitch-detection.pt"
+  ball_model_path: "data/models/football-ball-detection.pt"
+  confidence: 0.3
+  iou: 0.5
+  imgsz: 1280
+
+# Tracker settings
+tracking:
+  min_consecutive_frames: 3
+
+# Team classification
+classification:
+  stride: 60 # frame stride for gathering fitting crops
+
+# Referee Role Smoothing
+role_smoothing:
+  enabled: true
+  referee_min_frames: 8
+  referee_min_ratio: 0.55
+  referee_min_confidence: 0.55
+  lock_referee_role: true
+  use_color_referee_reid: false
+
+# Manual Role Overrides
+role_overrides:
+  enabled: true
+  referee_track_ids: []
+  player_track_ids: []
+  goalkeeper_track_ids: []
+  ball_track_ids: []
+
+# Debugging & Inspections
+debug_tracks: true
+
+# Event & Analytics
+analytics:
+  radar_opacity: 0.5
+  heatmap_opacity: 0.6
+
+# Commentary
+commentary:
+  enabled: true
+  llm_fallback: false
