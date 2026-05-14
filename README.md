@@ -32,15 +32,36 @@ chmod +x scripts/*.sh
 python scripts/download_assets.py
 ```
 
-### 3. Run the Demo
+### 3. Run the Full Analysis & Commentary Demo
 
+Run the end-to-end pipeline including movement analytics and Vietnamese speech synthesis commentary:
 ```cmd
 python -m football_ai.cli ^
   --config configs/default.yaml ^
   --input data/raw/sample.mp4 ^
   --output data/outputs/demo ^
-  --device cpu
+  --device cpu ^
+  --mode full ^
+  --max-frames 300
 ```
+
+Alternatively, if you have already run analytics once, you can run the commentary pipeline on its own:
+```cmd
+python -m football_ai.cli ^
+  --config configs/default.yaml ^
+  --input data/raw/sample.mp4 ^
+  --output data/outputs/demo ^
+  --device cpu ^
+  --mode commentary
+```
+
+**Expected Outputs in output directory:**
+- `events.json`: List of detected key events.
+- `commentary_script.json`: Script of mapped Vietnamese commentary text.
+- `commentary_audio/`: Individual mp3 snippets synthesized via edge-tts.
+- `commentary_full.mp3`: Full continuous master audio track overlay.
+- `video_with_commentary.mp4`: Composite final video output (if ffmpeg installed).
+
 
 ## Documentation
 Details are available in the [docs/](docs/) folder.

@@ -18,6 +18,8 @@ dependencies = [
     "pyyaml",
     "gdown",
     "pytest",
+    "edge-tts",
+    "pydub",
 ]
 
 [project.scripts]

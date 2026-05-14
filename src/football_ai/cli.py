@@ -7,6 +7,7 @@ from football_ai.pipelines.tracking_pipeline import TrackingPipeline
 from football_ai.pipelines.classification_pipeline import ClassificationPipeline
 from football_ai.pipelines.field_mapping_pipeline import FieldMappingPipeline
 from football_ai.pipelines.analytics_pipeline import AnalyticsPipeline
+from football_ai.pipelines.commentary_pipeline import CommentaryPipeline
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Football AI Video Commentary System CLI")
@@ -35,7 +36,7 @@ def parse_args():
     parser.add_argument(
         "--mode", 
         type=str, 
-        choices=["detect", "track", "classify", "map", "analytics", "full"],
+        choices=["detect", "track", "classify", "map", "analytics", "commentary", "full"],
         default="detect",
         help="System execution pipeline mode"
     )
@@ -90,6 +91,18 @@ def main():
         elif args.mode == "analytics":
             pipeline = AnalyticsPipeline(config)
             pipeline.run(max_frames=args.max_frames)
+        elif args.mode == "commentary":
+            pipeline = CommentaryPipeline(config)
+            pipeline.run()
+        elif args.mode == "full":
+            # Step A: Analytics
+            analytics = AnalyticsPipeline(config)
+            analytics.run(max_frames=args.max_frames)
+            
+            # Step B: Optional Commentary
+            if config.commentary.enabled:
+                commentary = CommentaryPipeline(config)
+                commentary.run()
         else:
             print(f"Mode '{args.mode}' skeleton complete. Pipeline TODO.")
     except FileNotFoundError as fnf:

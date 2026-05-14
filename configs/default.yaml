@@ -53,4 +53,23 @@ analytics:
 # Commentary
 commentary:
   enabled: true
+  language: "vi"
+  mode: "rule_based"
+  min_gap_seconds: 4.0
+  max_events_per_minute: 6
+  min_priority: 5
   llm_fallback: false
+
+tts:
+  enabled: true
+  provider: "edge"
+  voice: "vi-VN-NamMinhNeural"
+  rate: "+10%"
+  volume: "+0%"
+  pitch: "+0Hz"
+
+audio:
+  enabled: true
+  mix_with_original: false
+  commentary_volume_db: 0
+  background_volume_db: -12

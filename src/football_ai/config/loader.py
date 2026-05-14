@@ -10,7 +10,9 @@ from football_ai.config.schema import (
     RoleSmoothingConfig,
     RoleOverridesConfig,
     AnalyticsConfig,
-    CommentaryConfig
+    CommentaryConfig,
+    TTSConfig,
+    AudioConfig
 )
 
 def load_config(config_path: str) -> SystemConfig:
@@ -37,6 +39,8 @@ def load_config(config_path: str) -> SystemConfig:
         role_overrides=get_nested(data, "role_overrides", RoleOverridesConfig),
         analytics=get_nested(data, "analytics", AnalyticsConfig),
         commentary=get_nested(data, "commentary", CommentaryConfig),
+        tts=get_nested(data, "tts", TTSConfig),
+        audio=get_nested(data, "audio", AudioConfig),
         debug_tracks=data.get("debug_tracks", True)
     )
 

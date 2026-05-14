@@ -46,7 +46,28 @@ class AnalyticsConfig:
 @dataclass
 class CommentaryConfig:
     enabled: bool = True
+    language: str = "vi"
+    mode: str = "rule_based"
+    min_gap_seconds: float = 4.0
+    max_events_per_minute: int = 6
+    min_priority: int = 5
     llm_fallback: bool = False
+
+@dataclass
+class TTSConfig:
+    enabled: bool = True
+    provider: str = "edge"
+    voice: str = "vi-VN-NamMinhNeural"
+    rate: str = "+10%"
+    volume: str = "+0%"
+    pitch: str = "+0Hz"
+
+@dataclass
+class AudioConfig:
+    enabled: bool = True
+    mix_with_original: bool = False
+    commentary_volume_db: int = 0
+    background_volume_db: int = -12
 
 @dataclass
 class SystemConfig:
@@ -59,4 +80,6 @@ class SystemConfig:
     role_overrides: RoleOverridesConfig = field(default_factory=RoleOverridesConfig)
     analytics: AnalyticsConfig = field(default_factory=AnalyticsConfig)
     commentary: CommentaryConfig = field(default_factory=CommentaryConfig)
+    tts: TTSConfig = field(default_factory=TTSConfig)
+    audio: AudioConfig = field(default_factory=AudioConfig)
     debug_tracks: bool = True
