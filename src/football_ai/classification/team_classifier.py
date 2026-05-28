@@ -1,6 +1,7 @@
 import numpy as np
 from typing import List, Optional
 import football_ai.utils.paths # Automatically sets up pathing
+# pyrefly: ignore [missing-import]
 from sports.common.team import TeamClassifier as RoboflowTeamClassifier
 
 class TeamClassifier:

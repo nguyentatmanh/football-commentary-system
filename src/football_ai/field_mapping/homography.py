@@ -7,8 +7,9 @@ class HomographyEstimator:
     Encapsulates perspective transformations between screen-space pixel 
     coordinates and localized pitch-space coordinates.
     """
-    def __init__(self):
+    def __init__(self, smoothing_factor: float = 0.7):
         self.matrix = None
+        self.smoothing_factor = smoothing_factor
 
     def fit(self, source_points: np.ndarray, target_points: np.ndarray) -> bool:
         """
@@ -23,9 +24,14 @@ class HomographyEstimator:
         try:
             src = source_points.astype(np.float32)
             dst = target_points.astype(np.float32)
-            m, mask = cv2.findHomography(src, dst)
+            # Use RANSAC to aggressively reject outlier keypoints
+            m, mask = cv2.findHomography(src, dst, cv2.RANSAC, 5.0)
             if m is not None:
-                self.matrix = m
+                # Apply Exponential Moving Average (EMA) to prevent jitter
+                if self.matrix is not None:
+                    self.matrix = self.smoothing_factor * self.matrix + (1.0 - self.smoothing_factor) * m
+                else:
+                    self.matrix = m
                 return True
         except Exception as e:
             print(f"[!] Homography computation failed: {e}")

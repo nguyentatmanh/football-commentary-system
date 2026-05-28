@@ -42,6 +42,13 @@ class RadarVisualizer:
             "ball": (0, 223, 252),        # Bright Gold/Yellow
         }
 
+    def _meters_to_pixels(self, pt_m: List[float]) -> Tuple[int, int]:
+        """Convert meter coordinates to canvas pixel coordinates."""
+        cm_x, cm_y = pt_m[0] * 100.0, pt_m[1] * 100.0
+        px = int(cm_x * self.scale) + self.padding
+        py = int(cm_y * self.scale) + self.padding
+        return px, py
+
     def generate_radar_image(self, tracks: List[TrackState]) -> np.ndarray:
         """
         Renders a top-down view populated by mapped player states.
