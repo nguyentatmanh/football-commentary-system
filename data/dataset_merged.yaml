@@ -1,0 +1,15 @@
+# File cấu hình cho tập dữ liệu đã gộp (Merged Dataset)
+
+# Đường dẫn đến thư mục chứa dữ liệu trên Kaggle (hoặc local)
+# Trên Kaggle, thư mục working thường là /kaggle/working/
+path: /kaggle/input/datasets/huynguyen199/dataset-roboflow-for-train-model
+train: images/train  # Thư mục chứa ảnh train
+val: images/val      # Thư mục chứa ảnh validation
+test: images/test    # Thư mục chứa ảnh test (optional)
+
+# Định nghĩa các lớp (Classes)
+# Lưu ý: Các ID này phải khớp với ID được tạo ra trong file data_preparation.py
+names:
+  0: ball
+  1: pitch
+  2: player

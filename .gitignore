@@ -11,6 +11,16 @@ data/models/*
 !data/outputs/.gitkeep
 !data/models/.gitkeep
 
+# Images & Datasets
+*.jpg
+*.jpeg
+*.png
+football-*-detection-*/
+football-merged-dataset/
+football-merged-dataset.zip
+data/merged_labels/
+data/raw_images/
+
 # Video Extensions & Binary Large Media Assets
 *.mp4
 *.avi
@@ -51,3 +61,7 @@ dist/
 # IDE Specific Controls
 .vscode/
 .idea/
+
+# Original Cloned Repository
+MatchTime/
+
