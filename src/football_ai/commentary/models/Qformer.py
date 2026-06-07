@@ -37,12 +37,45 @@ from transformers.modeling_outputs import (
     SequenceClassifierOutput,
     TokenClassifierOutput,
 )
-from transformers.modeling_utils import (
-    PreTrainedModel,
-    apply_chunking_to_forward,
-    find_pruneable_heads_and_indices,
-    prune_linear_layer,
-)
+from transformers.modeling_utils import PreTrainedModel
+
+def find_pruneable_heads_and_indices(heads, n_heads, head_size, already_pruned_heads):
+    mask = torch.ones(n_heads, head_size)
+    heads = set(heads) - already_pruned_heads
+    for head in heads:
+        mask[head] = 0
+    mask = mask.view(-1)
+    index = torch.nonzero(mask == 0).squeeze()
+    return heads, index
+
+def prune_linear_layer(layer, index, dim=0):
+    index = index.to(layer.weight.device)
+    W = layer.weight.index_select(dim, index).clone().detach()
+    if layer.bias is not None:
+        if dim == 1:
+            b = layer.bias.clone().detach()
+        else:
+            b = layer.bias[index].clone().detach()
+    new_size = list(layer.weight.size())
+    new_size[dim] = len(index)
+    new_layer = torch.nn.Linear(new_size[1], new_size[0], bias=layer.bias is not None).to(layer.weight.device)
+    new_layer.weight.requires_grad = False
+    new_layer.weight.copy_(W.contiguous())
+    new_layer.weight.requires_grad = True
+    if layer.bias is not None:
+        new_layer.bias.requires_grad = False
+        new_layer.bias.copy_(b.contiguous())
+        new_layer.bias.requires_grad = True
+    return new_layer
+
+def apply_chunking_to_forward(forward_fn, chunk_size, chunk_dim, *input_tensors):
+    assert len(input_tensors) > 0
+    if chunk_size > 0:
+        num_chunks = max(1, input_tensors[0].shape[chunk_dim] // chunk_size)
+        input_tensors_chunks = tuple(input_tensor.chunk(num_chunks, dim=chunk_dim) for input_tensor in input_tensors)
+        output_chunks = tuple(forward_fn(*input_tensors_chunk) for input_tensors_chunk in zip(*input_tensors_chunks))
+        return torch.cat(output_chunks, dim=chunk_dim)
+    return forward_fn(*input_tensors)
 from transformers.utils import logging
 from transformers.models.bert.configuration_bert import BertConfig
 
@@ -662,6 +695,11 @@ class BertPreTrainedModel(PreTrainedModel):
     config_class = BertConfig
     base_model_prefix = "bert"
     _keys_to_ignore_on_load_missing = [r"position_ids"]
+    _tied_weights_keys = {}
+
+    @property
+    def all_tied_weights_keys(self):
+        return self._tied_weights_keys
 
     def _init_weights(self, module):
         """Initialize the weights"""

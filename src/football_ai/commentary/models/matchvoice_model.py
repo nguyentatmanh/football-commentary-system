@@ -54,7 +54,24 @@ class matchvoice_model(nn.Module):
         self.device = device
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_ckpt)
         self.tokenizer.add_tokens(["[PLAYER]","[TEAM]","[COACH]","[REFEREE]","([TEAM])"], special_tokens=True)
-        self.llama_model = AutoModelForCausalLM.from_pretrained(llm_ckpt, torch_dtype=torch.bfloat16)
+        try:
+            from transformers import BitsAndBytesConfig
+            bnb_config = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.bfloat16,
+                bnb_4bit_use_double_quant=True,
+                bnb_4bit_quant_type="nf4",
+                llm_int8_enable_fp32_cpu_offload=True,
+            )
+            self.llama_model = AutoModelForCausalLM.from_pretrained(
+                llm_ckpt, 
+                quantization_config=bnb_config,
+                device_map="auto"
+            )
+            print("Successfully loaded LLaMA-3 model in 4-bit quantization mode with auto device mapping!")
+        except Exception as e:
+            print(f"Failed to load in 4-bit ({e}). Falling back to standard precision.")
+            self.llama_model = AutoModelForCausalLM.from_pretrained(llm_ckpt, torch_dtype=torch.bfloat16)
         self.llama_model.resize_token_embeddings(len(self.tokenizer))
         self.ln_vision = LayerNorm(num_features)
         self.num_query_tokens = num_query_tokens,
@@ -81,7 +98,8 @@ class matchvoice_model(nn.Module):
         self.window = window
 
         # move to device
-        self.llama_model = self.llama_model.to(self.device)
+        if not getattr(self.llama_model, "is_quantized", False):
+            self.llama_model = self.llama_model.to(self.device)
         for name, param in self.llama_model.named_parameters():
             param.requires_grad = False
         self.video_Qformer = self.video_Qformer.to(self.device)
