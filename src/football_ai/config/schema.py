@@ -46,7 +46,19 @@ class AnalyticsConfig:
 @dataclass
 class CommentaryConfig:
     enabled: bool = True
-    llm_fallback: bool = False
+    use_llm_enhancement: bool = True
+    llm_model_name: str = "meta-llama/Meta-Llama-3-8B-Instruct"
+    tts_enabled: bool = True
+    tts_language: str = "en"
+    display_duration_seconds: float = 2.5
+
+@dataclass
+class MatchEventsConfig:
+    pass_velocity_threshold: float = 15.0
+    shot_velocity_threshold_multiplier: float = 1.8
+    ball_trajectory_history_len: int = 15
+    event_cooldown_frames: int = 60
+    possession_proximity_ratio: float = 0.40
 
 @dataclass
 class SystemConfig:
@@ -58,5 +70,6 @@ class SystemConfig:
     role_smoothing: RoleSmoothingConfig = field(default_factory=RoleSmoothingConfig)
     role_overrides: RoleOverridesConfig = field(default_factory=RoleOverridesConfig)
     analytics: AnalyticsConfig = field(default_factory=AnalyticsConfig)
+    match_events: MatchEventsConfig = field(default_factory=MatchEventsConfig)
     commentary: CommentaryConfig = field(default_factory=CommentaryConfig)
     debug_tracks: bool = True

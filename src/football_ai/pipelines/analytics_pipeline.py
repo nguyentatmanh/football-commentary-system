@@ -26,6 +26,12 @@ from football_ai.classification.role_smoother import RoleSmoother
 from football_ai.classification.role_override import RoleOverrideApplier
 from football_ai.classification.track_debug_exporter import TrackDebugExporter
 
+# Match Events & Commentary imports
+from football_ai.events.match_event_detector import MatchEventDetector
+from football_ai.commentary.tts_manager import TextToSpeechManager
+from football_ai.visualization.commentary_overlay import CommentaryOverlayRenderer
+from football_ai.commentary.llm_enhancer import LLMCommentaryEnhancer
+
 class AnalyticsPipeline:
     """
     Comprehensive analytics runner:
@@ -115,6 +121,19 @@ class AnalyticsPipeline:
         movement_analyzer = MovementAnalyzer(fps=fps)
         possession_analyzer = PossessionAnalyzer(grab_radius_m=2.5)
         heatmap_gen = HeatmapGenerator()
+        
+        # Instantiate Match Event and Commentary components
+        match_event_detector = MatchEventDetector(fps=fps, config=self.config.match_events)
+        tts_manager = TextToSpeechManager(language=self.config.commentary.tts_language)
+        
+        llm_enhancer = None
+        if getattr(self.config.commentary, 'use_llm_enhancement', False):
+            llm_enhancer = LLMCommentaryEnhancer(model_name=self.config.commentary.llm_model_name)
+            
+        commentary_overlay = CommentaryOverlayRenderer(
+            display_duration_secs=self.config.commentary.display_duration_seconds, 
+            fps=fps
+        )
 
         # PASS 1: Fit Team Classifier
         print("\n>>> PASS 1: Harvesting player crops for spatial classification...")
@@ -214,6 +233,15 @@ class AnalyticsPipeline:
                     movement_analyzer.process_frame_tracks(tracks)
                     possession_analyzer.process_frame(tracks, idx)
                     
+                    # Match Event Detection
+                    event = match_event_detector.process_frame(tracks)
+                    if event:
+                        if llm_enhancer:
+                            event["text"] = llm_enhancer.enhance_event(event["text"])
+                            
+                        commentary_overlay.register_event(event, idx)
+                        tts_manager.queue_event(event)
+                    
                     # Populate heatmap arrays
                     for t in tracks:
                         if t.pitch_xy is not None:
@@ -246,7 +274,11 @@ class AnalyticsPipeline:
                         poss_txt = "POSSESSION: CONTESTED / LOOSE"
                         
                     composite = self._overlay_composite(annotated_main, radar_img, poss_txt)
-                    video_writer.write_frame(composite)
+                    
+                    # Draw commentary UI over the final composite
+                    final_frame = commentary_overlay.render(composite, idx)
+                    
+                    video_writer.write_frame(final_frame)
                     pbar.update(1)
         finally:
             reader.release()
@@ -287,4 +319,21 @@ class AnalyticsPipeline:
         print(f"Saved possession statistics to: possession_summary.json")
         print(f"Saved interactive analytics log to: analytics_tracks.json")
         print(f"Rendered heatmaps to: {os.path.join(self.config.video.output_dir, 'heatmaps/')}")
-        print(f"Saved composite overlay video to: {video_out_path}")
+        
+        # ─── TTS Audio Generation & Multiplexing ───
+        if self.config.commentary.tts_enabled:
+            print("\n>>> Synthesizing Broadcast Audio (TTS)...")
+            audio_out_path = os.path.join(self.config.video.output_dir, "broadcast_audio.wav")
+            final_video_out_path = os.path.join(self.config.video.output_dir, "analytics_video_with_audio.mp4")
+            
+            total_duration_secs = reader.total_frames / fps
+            tts_manager.build_broadcast_audio(total_duration_secs, audio_out_path)
+            
+            try:
+                tts_manager.attach_audio_to_video(video_out_path, audio_out_path, final_video_out_path)
+                print(f"Saved final broadcast video with audio to: {final_video_out_path}")
+            except Exception as e:
+                print(f"Audio attachment failed: {e}")
+                print(f"Saved composite overlay video (no audio) to: {video_out_path}")
+        else:
+            print(f"Saved composite overlay video to: {video_out_path}")

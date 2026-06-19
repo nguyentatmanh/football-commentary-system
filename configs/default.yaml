@@ -50,7 +50,19 @@ analytics:
   radar_opacity: 0.5
   heatmap_opacity: 0.6
 
+# Match Events Detection
+match_events:
+  pass_velocity_threshold: 15.0
+  shot_velocity_threshold_multiplier: 1.8
+  ball_trajectory_history_len: 15
+  event_cooldown_frames: 60
+  possession_proximity_ratio: 0.40
+
 # Commentary
 commentary:
   enabled: true
-  llm_fallback: false
+  use_llm_enhancement: true
+  llm_model_name: "meta-llama/Meta-Llama-3-8B-Instruct"
+  tts_enabled: true
+  tts_language: "en"
+  display_duration_seconds: 2.5
