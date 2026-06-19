@@ -59,36 +59,50 @@ class MovementAnalyzer:
                 )
                 self._speed_samples[tid] = []
 
-            # Retrieve and append
+            # Áp dụng bộ lọc EMA (Exponential Moving Average) để khử nhiễu vi dao động của bounding box
             mstats = self.stats[tid]
-            mstats.trajectory.append((t.frame_index, t.pitch_xy))
+            alpha = 0.15  # Hệ số làm mượt (càng nhỏ càng mượt, giảm nhiễu)
+            
+            if not mstats.trajectory:
+                smoothed_xy = list(t.pitch_xy)
+            else:
+                _, prev_smoothed_xy = mstats.trajectory[-1]
+                smoothed_xy = [
+                    alpha * t.pitch_xy[0] + (1 - alpha) * prev_smoothed_xy[0],
+                    alpha * t.pitch_xy[1] + (1 - alpha) * prev_smoothed_xy[1]
+                ]
 
-            # If we have at least two points, compute movement delta
+            # Lưu tọa độ đã được làm mượt vào quỹ đạo
+            mstats.trajectory.append((t.frame_index, smoothed_xy))
+
+            # Nếu có ít nhất 2 điểm, tính toán độ dịch chuyển và vận tốc
             if len(mstats.trajectory) >= 2:
                 prev_frame, prev_xy = mstats.trajectory[-2]
                 curr_frame, curr_xy = mstats.trajectory[-1]
                 
-                # 1. Compute Time Delta
+                # 1. Tính khoảng thời gian giữa 2 khung hình
                 frame_diff = curr_frame - prev_frame
                 if frame_diff <= 0:
                     continue
                 time_delta = frame_diff / self.fps
                 
-                # 2. Compute Displacement
+                # 2. Tính độ dịch chuyển (m) dựa trên tọa độ đã làm mượt
                 dist = float(np.linalg.norm(np.array(curr_xy) - np.array(prev_xy)))
                 speed = dist / time_delta
                 
-                # 3. Apply physics threshold clamping (reject track ID jumps/flickering anomalies)
+                # 3. Loại bỏ các bước nhảy phi vật lý (nhiễu nhảy ID hoặc lỗi tracking)
                 threshold = self.max_ball_speed if t.role == "ball" else self.max_player_speed
-                
                 if speed > threshold:
-                    # DANGER: Physics defying movement detected!
-                    # Discard last coordinate to filter noise or treat it as non-movement
-                    # We pop the coordinate to prevent permanent degradation of stats
                     mstats.trajectory.pop()
                     continue
                     
-                # 4. Commit stable metrics
+                # 4. Triệt tiêu nhiễu dao động nhỏ khi đứng yên (dead-zone filter)
+                # Nếu dịch chuyển nhỏ hơn 2cm (0.02m) trong 1 frame, coi như đứng yên
+                if dist < 0.02:
+                    dist = 0.0
+                    speed = 0.0
+                    
+                # 5. Cộng dồn quãng đường và cập nhật tốc độ cực đại
                 mstats.total_distance_m += dist
                 mstats.max_speed_mps = max(mstats.max_speed_mps, speed)
                 

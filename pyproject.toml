@@ -18,6 +18,7 @@ dependencies = [
     "pyyaml",
     "gdown",
     "pytest",
+    "streamlit",
 ]
 
 [project.scripts]
